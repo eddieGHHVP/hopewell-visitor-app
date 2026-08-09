@@ -373,7 +373,16 @@
     localStorage.setItem(key, JSON.stringify(val));
   }
 
-  function getSettings(){ return loadJSON(STORAGE_SETTINGS, {url:""}); }
+  // Baked-in default so every phone works out of the box, even if this
+  // device's local storage doesn't stick (a known iOS quirk in standalone
+  // "Add to Home Screen" apps). Settings can still override it if needed.
+  var DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxkwD6qYVbzKk2843K4GKn7l6nMokpZHWZr5VXY3con_9NLrAs76C5tCXPgSGqP4HNL/exec";
+
+  function getSettings(){
+    var s = loadJSON(STORAGE_SETTINGS, {url:""});
+    if(!s.url){ s.url = DEFAULT_SHEET_URL; }
+    return s;
+  }
   function getEntries(){ return loadJSON(STORAGE_ENTRIES, []); }
   function getQueue(){ return loadJSON(STORAGE_QUEUE, []); }
 
@@ -660,6 +669,15 @@
   // guessing a fixed pixel value we measure the actual nav bar and pad
   // the page to match, with a little extra buffer on top.
   var navEl = document.querySelector("nav.bottom-nav");
+  // Standalone "Add to Home Screen" apps on iOS don't reliably report
+  // env(safe-area-inset-bottom) through CSS, so when running standalone we
+  // set the nav bar's bottom padding directly in pixels instead of trusting
+  // the CSS env() value at all.
+  var isStandalone = window.navigator.standalone === true;
+  if(isStandalone && navEl){
+    navEl.style.paddingBottom = "34px";
+  }
+
   function adjustBottomPadding(){
     if(!navEl) return;
     var h = navEl.getBoundingClientRect().height;
