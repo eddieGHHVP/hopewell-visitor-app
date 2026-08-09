@@ -199,7 +199,7 @@
 <header class="app-header">
   <div>
     <h1>Hopewell Visitor App</h1>
-    <div class="sub" id="headerSub">Welcoming and remembering visitors together</div>
+    <div class="sub" id="headerSub">Capture new faces, keep the whole team in the loop</div>
   </div>
   <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙</button>
 </header>
@@ -274,7 +274,7 @@
         <label for="fNotes">Notes <span class="opt">(family, kids' names, prayer requests, how to follow up...)</span></label>
         <textarea id="fNotes" placeholder="Anything worth remembering..."></textarea>
       </div>
-      <button class="btn-primary" id="saveBtn" style="margin-bottom:20px;">Save Person</button>
+      <button class="btn-primary" id="saveBtn">Save Person</button>
     </div>
   </section>
 
@@ -664,7 +664,7 @@
     if(!navEl) return;
     var h = navEl.getBoundingClientRect().height;
     if(h > 0){
-      document.body.style.paddingBottom = (h + 24) + "px";
+      document.body.style.paddingBottom = (h + 50) + "px";
     }
   }
   window.addEventListener("load", adjustBottomPadding);
