@@ -71,6 +71,21 @@
     padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
   }
 
+  .edit-banner{
+    display:none;
+    align-items:center;gap:8px;
+    background:#eaf2ec;color:var(--green-dark);
+    border:1px solid #cfe3d5;
+    border-radius:10px;
+    padding:9px 12px;font-size:12.5px;font-weight:600;
+    margin-bottom:12px;
+  }
+  .edit-banner.show{display:flex;}
+  .edit-banner button{
+    margin-left:auto;background:var(--green);color:#fff;border:none;
+    padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
+  }
+
   .card{
     background:var(--card);
     border-radius:var(--radius);
@@ -156,6 +171,12 @@
   .person-notes{font-size:13.5px;color:var(--ink);margin-top:8px;line-height:1.45;
     background:#f7f5ee;padding:8px 10px;border-radius:8px;}
   .pending-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:6px;vertical-align:middle;}
+  .person-actions{display:flex;justify-content:flex-end;margin-top:10px;}
+  .edit-btn{
+    background:none;border:1.5px solid var(--green);color:var(--green-dark);
+    font-size:12.5px;font-weight:600;padding:6px 16px;border-radius:999px;
+  }
+  .edit-btn:active{background:var(--green);color:#fff;}
 
   .empty-state{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;}
   .empty-state .big{font-size:34px;margin-bottom:8px;}
@@ -199,7 +220,7 @@
 <header class="app-header">
   <div>
     <h1>Hopewell Visitor App</h1>
-    <div class="sub" id="headerSub">Welcoming and remembering visitors together</div>
+    <div class="sub" id="headerSub">Capture new faces, keep the whole team in the loop</div>
   </div>
   <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙</button>
 </header>
@@ -212,6 +233,10 @@
 <main>
   <!-- ADD SCREEN -->
   <section class="screen active" id="screen-add">
+    <div class="edit-banner" id="editBanner">
+      <span id="editBannerText">Editing...</span>
+      <button type="button" id="cancelEditBtn">Cancel</button>
+    </div>
     <div class="card">
       <div class="field">
         <label for="fName">Name *</label>
@@ -274,7 +299,7 @@
         <label for="fNotes">Notes <span class="opt">(family, kids' names, prayer requests, how to follow up...)</span></label>
         <textarea id="fNotes" placeholder="Anything worth remembering..."></textarea>
       </div>
-      <button class="btn-primary" id="saveBtn" style="margin-bottom:20px;">Save Person</button>
+      <button class="btn-primary" id="saveBtn">Save Person</button>
     </div>
   </section>
 
@@ -357,10 +382,14 @@
     syncBanner: document.getElementById("syncBanner"),
     syncBannerText: document.getElementById("syncBannerText"),
     retrySyncBtn: document.getElementById("retrySyncBtn"),
-    headerSub: document.getElementById("headerSub")
+    headerSub: document.getElementById("headerSub"),
+    editBanner: document.getElementById("editBanner"),
+    editBannerText: document.getElementById("editBannerText"),
+    cancelEditBtn: document.getElementById("cancelEditBtn")
   };
 
   var selectedVisitorType = "First-time";
+  var editingId = null;
 
   // ---------- Storage helpers ----------
   function loadJSON(key, fallback){
@@ -373,7 +402,16 @@
     localStorage.setItem(key, JSON.stringify(val));
   }
 
-  function getSettings(){ return loadJSON(STORAGE_SETTINGS, {url:""}); }
+  // Baked-in default so every phone works out of the box, even if this
+  // device's local storage doesn't stick (a known iOS quirk in standalone
+  // "Add to Home Screen" apps). Settings can still override it if needed.
+  var DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxkwD6qYVbzKk2843K4GKn7l6nMokpZHWZr5VXY3con_9NLrAs76C5tCXPgSGqP4HNL/exec";
+
+  function getSettings(){
+    var s = loadJSON(STORAGE_SETTINGS, {url:""});
+    if(!s.url){ s.url = DEFAULT_SHEET_URL; }
+    return s;
+  }
   function getEntries(){ return loadJSON(STORAGE_ENTRIES, []); }
   function getQueue(){ return loadJSON(STORAGE_QUEUE, []); }
 
@@ -460,6 +498,49 @@
     });
   }
 
+  // ---------- Edit an existing entry ----------
+  function setSelectValue(selectEl, val){
+    var opts = selectEl.options;
+    for(var i=0;i<opts.length;i++){
+      if(opts[i].value === val){ selectEl.selectedIndex = i; return; }
+    }
+    selectEl.selectedIndex = 0;
+  }
+
+  function startEdit(entry){
+    editingId = entry.id;
+    els.fName.value = entry.name || "";
+    els.fPhone.value = entry.phone || "";
+    els.fEmail.value = entry.email || "";
+    els.fNotes.value = entry.notes || "";
+    els.fDate.value = entry.dateMet || todayStr();
+    setSelectValue(els.fService, entry.service);
+    setSelectValue(els.fBackground, entry.background);
+    setSelectValue(els.fMetBy, entry.metBy);
+    selectedVisitorType = entry.visitorType || "First-time";
+    els.visitorTypeChips.querySelectorAll(".chip").forEach(function(c){
+      c.classList.toggle("selected", c.getAttribute("data-val") === selectedVisitorType);
+    });
+    els.saveBtn.textContent = "Update Person";
+    els.editBannerText.textContent = "Editing " + (entry.name || "this person");
+    els.editBanner.classList.add("show");
+
+    document.querySelectorAll(".nav-btn").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-screen") === "add");
+    });
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById("screen-add").classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  function cancelEdit(){
+    editingId = null;
+    els.saveBtn.textContent = "Save Person";
+    els.editBanner.classList.remove("show");
+    resetForm();
+  }
+  els.cancelEditBtn.addEventListener("click", cancelEdit);
+
   els.saveBtn.addEventListener("click", function(){
     var name = els.fName.value.trim();
     if(!name){
@@ -467,8 +548,9 @@
       els.fName.focus();
       return;
     }
+    var isEditing = !!editingId;
     var entry = {
-      id: uuid(),
+      id: isEditing ? editingId : uuid(),
       dateMet: els.fDate.value || todayStr(),
       name: name,
       phone: els.fPhone.value.trim(),
@@ -479,19 +561,30 @@
       background: els.fBackground.value,
       notes: els.fNotes.value.trim(),
       _createdAt: Date.now(),
-      _synced: false
+      _synced: false,
+      _editable: true,
+      mode: isEditing ? "update" : "add"
     };
 
     // Save locally first (so it's never lost)
     var entries = getEntries();
-    entries.unshift(entry);
+    if(isEditing){
+      var idx = -1;
+      for(var i=0;i<entries.length;i++){ if(entries[i].id === entry.id){ idx = i; break; } }
+      if(idx !== -1){ entries[idx] = entry; } else { entries.unshift(entry); }
+    } else {
+      entries.unshift(entry);
+    }
     saveJSON(STORAGE_ENTRIES, entries);
 
-    var queue = getQueue();
+    var queue = getQueue().filter(function(q){ return q.id !== entry.id; });
     queue.push(entry);
     saveJSON(STORAGE_QUEUE, queue);
 
-    showToast("Saved " + name + "!");
+    showToast(isEditing ? "Updated " + name + "!" : "Saved " + name + "!");
+    editingId = null;
+    els.saveBtn.textContent = "Save Person";
+    els.editBanner.classList.remove("show");
     resetForm();
     updateSyncBanner();
     syncQueue();
@@ -514,21 +607,31 @@
       method: "POST",
       headers: {"Content-Type":"text/plain;charset=utf-8"},
       body: JSON.stringify({
+        id: item.id, mode: item.mode || "add",
         dateMet: item.dateMet, name: item.name, phone: item.phone, email: item.email,
         metBy: item.metBy, service: item.service, visitorType: item.visitorType,
         background: item.background, notes: item.notes
       })
     }).then(function(res){
       if(!res.ok) throw new Error("Bad response " + res.status);
-      // mark synced
+      return res.json().catch(function(){ return {status:"ok"}; });
+    }).then(function(body){
       var queue2 = getQueue();
       queue2.shift();
       saveJSON(STORAGE_QUEUE, queue2);
-      var entries = getEntries().map(function(e){
-        if(e.id === item.id) e._synced = true;
-        return e;
-      });
-      saveJSON(STORAGE_ENTRIES, entries);
+
+      if(body && body.status === "error"){
+        // Can't be recovered automatically (e.g. an entry saved before edit
+        // support existed, with no matching row to update) — drop it from
+        // the queue so it doesn't block everything else, and tell the user.
+        showToast(body.message || "Couldn't sync one update", true);
+      } else {
+        var entries = getEntries().map(function(e){
+          if(e.id === item.id) e._synced = true;
+          return e;
+        });
+        saveJSON(STORAGE_ENTRIES, entries);
+      }
       syncing = false;
       updateSyncBanner();
       renderList();
@@ -573,6 +676,7 @@
         var remote = Array.isArray(data) ? data : (data.value || []);
         if(!Array.isArray(remote)) return;
         var normalized = remote.map(function(r){
+          var hasId = !!r.id;
           return {
             id: r.id || (r.dateMet + r.name + Math.random()),
             dateMet: r.dateMet || r["Date Met"] || "",
@@ -584,13 +688,17 @@
             visitorType: r.visitorType || r["Visitor Type"] || "",
             background: r.background || r["Background"] || "",
             notes: r.notes || r["Notes"] || "",
-            _synced: true
+            _synced: true,
+            // Entries saved before the "edit" feature existed have no ID in
+            // the sheet, so there's nothing stable to match against later —
+            // those can only be edited directly in the Sheet.
+            _editable: hasId
           };
         });
         // merge: keep any locally-pending (unsynced) items on top, replace synced ones with server truth
         var queueIds = getQueue().map(function(q){ return q.id; });
         var localPending = getEntries().filter(function(e){ return queueIds.indexOf(e.id) !== -1; });
-        var merged = localPending.concat(normalized);
+        var merged = localPending.concat(normalized.filter(function(n){ return queueIds.indexOf(n.id) === -1; }));
         saveJSON(STORAGE_ENTRIES, merged);
         renderList();
       })
@@ -632,6 +740,8 @@
       if(e.email) meta.push("✉️ " + esc(e.email));
       if(e.metBy) meta.push("Met by " + esc(e.metBy));
       var pending = !e._synced ? '<span class="pending-dot" title="Not yet synced"></span>' : "";
+      var editBtn = e._editable !== false ?
+        '<div class="person-actions"><button type="button" class="edit-btn" data-id="' + esc(e.id) + '">Edit</button></div>' : "";
       return '' +
         '<div class="person-card">' +
           '<div class="person-top">' +
@@ -641,10 +751,19 @@
           (tags ? '<div class="person-tags">' + tags + '</div>' : '') +
           (meta.length ? '<div class="person-meta">' + meta.join(" &nbsp;·&nbsp; ") + '</div>' : '') +
           (e.notes ? '<div class="person-notes">' + esc(e.notes) + '</div>' : '') +
+          editBtn +
         '</div>';
     }).join("");
     els.listContainer.innerHTML = html;
   }
+
+  els.listContainer.addEventListener("click", function(e){
+    var btn = e.target.closest(".edit-btn");
+    if(!btn) return;
+    var id = btn.getAttribute("data-id");
+    var entry = getEntries().filter(function(x){ return x.id === id; })[0];
+    if(entry) startEdit(entry);
+  });
 
   function esc(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -660,11 +779,20 @@
   // guessing a fixed pixel value we measure the actual nav bar and pad
   // the page to match, with a little extra buffer on top.
   var navEl = document.querySelector("nav.bottom-nav");
+  // Standalone "Add to Home Screen" apps on iOS don't reliably report
+  // env(safe-area-inset-bottom) through CSS, so when running standalone we
+  // set the nav bar's bottom padding directly in pixels instead of trusting
+  // the CSS env() value at all.
+  var isStandalone = window.navigator.standalone === true;
+  if(isStandalone && navEl){
+    navEl.style.paddingBottom = "34px";
+  }
+
   function adjustBottomPadding(){
     if(!navEl) return;
     var h = navEl.getBoundingClientRect().height;
     if(h > 0){
-      document.body.style.paddingBottom = (h + 24) + "px";
+      document.body.style.paddingBottom = (h + 50) + "px";
     }
   }
   window.addEventListener("load", adjustBottomPadding);
