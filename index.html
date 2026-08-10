@@ -55,7 +55,6 @@
   main{padding:14px 14px 20px;max-width:560px;margin:0 auto;}
   .screen{display:none;}
   .screen.active{display:block;}
-  #screen-add{padding-bottom:40px;}
   .sync-banner{
     display:none;
     align-items:center;gap:8px;
@@ -415,6 +414,11 @@
       document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
       document.getElementById("screen-" + target).classList.add("active");
       if(target === "list"){ renderList(); }
+      // Switching screens can leave the page scrolled from whatever
+      // position it was at on the previous (often taller) screen. iOS can
+      // visibly "detach" the fixed nav bar from the bottom edge until the
+      // scroll position resettles, so reset it explicitly on every switch.
+      window.scrollTo(0,0);
     });
   });
   // ---------- Visitor type chips ----------
@@ -773,8 +777,3 @@
     });
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('sw.js').catch(function(){});
-    });
-  }
-</script>
-</body>
-</html>
