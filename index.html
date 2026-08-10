@@ -6,10 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hopewell Visitor App">
-<meta name="theme-color" content="#435E50">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<meta name="theme-color" content="#3b5f4f">
 <title>Hopewell Visitor App</title>
 <style>
   :root{
@@ -58,7 +55,6 @@
   main{padding:14px 14px 20px;max-width:560px;margin:0 auto;}
   .screen{display:none;}
   .screen.active{display:block;}
-
   .sync-banner{
     display:none;
     align-items:center;gap:8px;
@@ -73,7 +69,6 @@
     margin-left:auto;background:#8a5a1f;color:#fff;border:none;
     padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
   }
-
   .edit-banner{
     display:none;
     align-items:center;gap:8px;
@@ -88,7 +83,6 @@
     margin-left:auto;background:var(--green);color:#fff;border:none;
     padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
   }
-
   .card{
     background:var(--card);
     border-radius:var(--radius);
@@ -125,14 +119,12 @@
   }
   textarea{min-height:70px;resize:vertical;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green);}
-
   .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
   .chip{
     padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);
     background:#fff;font-size:13.5px;color:var(--ink);font-weight:500;
   }
   .chip.selected{background:var(--green);border-color:var(--green);color:#fff;}
-
   .btn-primary{
     width:100%;background:var(--green);color:#fff;border:none;
     padding:15px;border-radius:12px;font-size:16px;font-weight:700;
@@ -144,7 +136,6 @@
     width:100%;background:#fff;color:var(--green-dark);border:1.5px solid var(--green);
     padding:12px;border-radius:12px;font-size:14.5px;font-weight:600;
   }
-
   .toast{
     position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));
     background:var(--green-dark);color:#fff;padding:12px 16px;border-radius:12px;
@@ -154,7 +145,6 @@
   }
   .toast.show{opacity:1;transform:translateY(0);}
   .toast.error{background:var(--danger);}
-
   /* People list */
   .search-wrap{margin-bottom:12px;}
   .person-card{
@@ -180,10 +170,8 @@
     font-size:12.5px;font-weight:600;padding:6px 16px;border-radius:999px;
   }
   .edit-btn:active{background:var(--green);color:#fff;}
-
   .empty-state{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;}
   .empty-state .big{font-size:34px;margin-bottom:8px;}
-
   /* Bottom nav */
   nav.bottom-nav{
     position:fixed;bottom:0;left:0;right:0;
@@ -199,7 +187,6 @@
   }
   nav.bottom-nav button.active{color:var(--green);}
   nav.bottom-nav .nav-ico{font-size:15px;}
-
   /* Settings modal */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:40;
@@ -214,12 +201,10 @@
   .modal-handle{width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 12px;}
   .help-text{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
   .close-modal{position:absolute;top:14px;right:14px;}
-
   a.link{color:var(--green-dark);text-decoration:underline;}
 </style>
 </head>
 <body>
-
 <header class="app-header">
   <div>
     <h1>Hopewell Visitor App</h1>
@@ -227,12 +212,10 @@
   </div>
   <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙</button>
 </header>
-
 <div class="sync-banner" id="syncBanner">
   <span id="syncBannerText">Some entries haven't synced yet.</span>
   <button id="retrySyncBtn">Retry</button>
 </div>
-
 <main>
   <!-- ADD SCREEN -->
   <section class="screen active" id="screen-add">
@@ -307,7 +290,6 @@
       <button class="btn-primary" id="saveBtn">Save Person</button>
     </div>
   </section>
-
   <!-- LIST SCREEN -->
   <section class="screen" id="screen-list">
     <div class="search-wrap">
@@ -316,7 +298,6 @@
     <div id="listContainer"></div>
   </section>
 </main>
-
 <nav class="bottom-nav">
   <button class="nav-btn active" data-screen="add">
     <span class="nav-ico">➕</span>Add Person
@@ -325,9 +306,7 @@
     <span class="nav-ico">📋</span>People
   </button>
 </nav>
-
 <div class="toast" id="toast"></div>
-
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal-sheet">
@@ -356,15 +335,12 @@
     <button class="btn-secondary" id="closeSettingsBtn" style="margin-top:14px;">Close</button>
   </div>
 </div>
-
 <script>
 (function(){
   "use strict";
-
   var STORAGE_ENTRIES = "hopewell_entries_v1";
   var STORAGE_SETTINGS = "hopewell_settings_v2";
   var STORAGE_QUEUE = "hopewell_pending_v1";
-
   var els = {
     saveBtn: document.getElementById("saveBtn"),
     fName: document.getElementById("fName"),
@@ -392,10 +368,8 @@
     editBannerText: document.getElementById("editBannerText"),
     cancelEditBtn: document.getElementById("cancelEditBtn")
   };
-
   var selectedVisitorType = "First-time";
   var editingId = null;
-
   // ---------- Storage helpers ----------
   function loadJSON(key, fallback){
     try{
@@ -406,12 +380,10 @@
   function saveJSON(key, val){
     localStorage.setItem(key, JSON.stringify(val));
   }
-
   // Baked-in default so every phone works out of the box, even if this
   // device's local storage doesn't stick (a known iOS quirk in standalone
   // "Add to Home Screen" apps). Settings can still override it if needed.
   var DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbwVbKhtt8I4oMwxep51X3X4TLEqWRoPtSHgs7x5kfEQaM9f_Mq7jsyv4e3FHWv_FJJlkg/exec";
-
   function getSettings(){
     var s = loadJSON(STORAGE_SETTINGS, {url:""});
     if(!s.url){ s.url = DEFAULT_SHEET_URL; }
@@ -419,14 +391,12 @@
   }
   function getEntries(){ return loadJSON(STORAGE_ENTRIES, []); }
   function getQueue(){ return loadJSON(STORAGE_QUEUE, []); }
-
   function uuid(){
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
       var r = Math.random()*16|0, v = c==="x"?r:(r&0x3|0x8);
       return v.toString(16);
     });
   }
-
   // ---------- Toast ----------
   var toastTimer;
   function showToast(msg, isError){
@@ -435,7 +405,6 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ els.toast.className = "toast"; }, 2600);
   }
-
   // ---------- Screens / nav ----------
   document.querySelectorAll(".nav-btn").forEach(function(btn){
     btn.addEventListener("click", function(){
@@ -447,7 +416,6 @@
       if(target === "list"){ renderList(); }
     });
   });
-
   // ---------- Visitor type chips ----------
   els.visitorTypeChips.addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
@@ -456,7 +424,6 @@
     chip.classList.add("selected");
     selectedVisitorType = chip.getAttribute("data-val");
   });
-
   // ---------- Settings modal ----------
   function openSettings(){
     var s = getSettings();
@@ -477,7 +444,6 @@
     fetchRemoteEntries();
     syncQueue();
   });
-
   // ---------- Default date ----------
   function todayStr(){
     var d = new Date();
@@ -486,7 +452,6 @@
     return d.getFullYear() + "-" + m + "-" + day;
   }
   els.fDate.value = todayStr();
-
   // ---------- Save entry ----------
   function resetForm(){
     els.fName.value = "";
@@ -502,7 +467,6 @@
       c.classList.toggle("selected", i===0);
     });
   }
-
   // ---------- Edit an existing entry ----------
   function setSelectValue(selectEl, val){
     var opts = selectEl.options;
@@ -511,7 +475,6 @@
     }
     selectEl.selectedIndex = 0;
   }
-
   function startEdit(entry){
     editingId = entry.id;
     els.fName.value = entry.name || "";
@@ -529,7 +492,6 @@
     els.saveBtn.textContent = "Update Person";
     els.editBannerText.textContent = "Editing " + (entry.name || "this person");
     els.editBanner.classList.add("show");
-
     document.querySelectorAll(".nav-btn").forEach(function(b){
       b.classList.toggle("active", b.getAttribute("data-screen") === "add");
     });
@@ -537,7 +499,6 @@
     document.getElementById("screen-add").classList.add("active");
     window.scrollTo(0,0);
   }
-
   function cancelEdit(){
     editingId = null;
     els.saveBtn.textContent = "Save Person";
@@ -545,7 +506,6 @@
     resetForm();
   }
   els.cancelEditBtn.addEventListener("click", cancelEdit);
-
   els.saveBtn.addEventListener("click", function(){
     var name = els.fName.value.trim();
     if(!name){
@@ -570,7 +530,6 @@
       _editable: true,
       mode: isEditing ? "update" : "add"
     };
-
     // Save locally first (so it's never lost)
     var entries = getEntries();
     if(isEditing){
@@ -581,11 +540,9 @@
       entries.unshift(entry);
     }
     saveJSON(STORAGE_ENTRIES, entries);
-
     var queue = getQueue().filter(function(q){ return q.id !== entry.id; });
     queue.push(entry);
     saveJSON(STORAGE_QUEUE, queue);
-
     showToast(isEditing ? "Updated " + name + "!" : "Saved " + name + "!");
     editingId = null;
     els.saveBtn.textContent = "Save Person";
@@ -594,7 +551,6 @@
     updateSyncBanner();
     syncQueue();
   });
-
   // ---------- Sync queue to Google Sheet ----------
   var syncing = false;
   function syncQueue(){
@@ -604,7 +560,6 @@
     var queue = getQueue();
     if(queue.length === 0) return;
     syncing = true;
-
     var item = queue[0];
     // Content-Type text/plain avoids a CORS preflight against Apps Script;
     // the script still JSON.parses the raw body itself.
@@ -624,7 +579,6 @@
       var queue2 = getQueue();
       queue2.shift();
       saveJSON(STORAGE_QUEUE, queue2);
-
       if(body && body.status === "error"){
         // Can't be recovered automatically (e.g. an entry saved before edit
         // support existed, with no matching row to update) — drop it from
@@ -646,7 +600,6 @@
       updateSyncBanner();
     });
   }
-
   function updateSyncBanner(){
     var queue = getQueue();
     var settings = getSettings();
@@ -668,9 +621,7 @@
     syncQueue();
     fetchRemoteEntries();
   });
-
   window.addEventListener("online", function(){ syncQueue(); fetchRemoteEntries(); });
-
   // ---------- Fetch shared list from Google Sheet ----------
   function fetchRemoteEntries(){
     var settings = getSettings();
@@ -709,7 +660,6 @@
       })
       .catch(function(){ /* silent - offline is fine, we show cached data */ });
   }
-
   // ---------- Render list ----------
   function fmtDate(iso){
     if(!iso) return "";
@@ -717,7 +667,6 @@
     if(isNaN(d)) return iso;
     return d.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
   }
-
   function renderList(){
     var q = (els.searchBox.value || "").toLowerCase().trim();
     var entries = getEntries();
@@ -729,12 +678,10 @@
     entries.sort(function(a,b){
       return (b.dateMet||"").localeCompare(a.dateMet||"") || (b._createdAt||0)-(a._createdAt||0);
     });
-
     if(entries.length === 0){
       els.listContainer.innerHTML = '<div class="empty-state"><div class="big">🤝</div>No one here yet — the first person you add will show up here.</div>';
       return;
     }
-
     var html = entries.map(function(e){
       var tags = "";
       if(e.visitorType) tags += '<span class="tag">' + esc(e.visitorType) + '</span>';
@@ -761,7 +708,6 @@
     }).join("");
     els.listContainer.innerHTML = html;
   }
-
   els.listContainer.addEventListener("click", function(e){
     var btn = e.target.closest(".edit-btn");
     if(!btn) return;
@@ -769,15 +715,12 @@
     var entry = getEntries().filter(function(x){ return x.id === id; })[0];
     if(entry) startEdit(entry);
   });
-
   function esc(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
     });
   }
-
   els.searchBox.addEventListener("input", renderList);
-
   // ---------- Keep bottom padding matched to the real nav bar height ----------
   // CSS env(safe-area-inset-bottom) can be reported differently between a
   // regular Safari tab and a "home screen" standalone app, so instead of
@@ -792,7 +735,6 @@
   if(isStandalone && navEl){
     navEl.style.paddingBottom = "34px";
   }
-
   function adjustBottomPadding(){
     if(!navEl) return;
     var h = navEl.getBoundingClientRect().height;
@@ -807,7 +749,6 @@
   });
   adjustBottomPadding();
   setTimeout(adjustBottomPadding, 300); // catch late layout settling on standalone launch
-
   // ---------- Init ----------
   updateSyncBanner();
   renderList();
@@ -816,9 +757,23 @@
   setInterval(function(){
     if(navigator.onLine){ syncQueue(); }
   }, 20000);
-
 })();
 </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    // When a newly-deployed service worker takes over, automatically
+    // reload once so people always see the latest version without having
+    // to manually clear cached data or re-add the home screen icon.
+    var swRefreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if (swRefreshing) return;
+      swRefreshing = true;
+      window.location.reload();
+    });
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
