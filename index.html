@@ -54,7 +54,7 @@
   }
   main{padding:14px 14px 20px;max-width:560px;margin:0 auto;}
   .screen{display:none;}
-  #screen-add{padding-bottom:40px;}
+  .screen.active{display:block;}
   .sync-banner{
     display:none;
     align-items:center;gap:8px;
@@ -769,12 +769,11 @@
     // When a newly-deployed service worker takes over, automatically
     // reload once so people always see the latest version without having
     // to manually clear cached data or re-add the home screen icon.
-    var swRefreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if (swRefreshing) return;
-      swRefreshing = true;
-      window.location.reload();
-    });
+    //
+    // (Removed the automatic reload-on-update that used to be here — it
+    // risked reload loops when deploying several versions in quick
+    // succession. The service worker already fetches fresh content over
+    // the network on every normal visit, so it wasn't actually needed.)
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('sw.js').catch(function(){});
     });
