@@ -29,15 +29,21 @@
     font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
     background:var(--cream);
     color:var(--ink);
-    padding-bottom:calc(100px + env(safe-area-inset-bottom));
-    padding-top:env(safe-area-inset-top);
+    /* Header, sync banner, and bottom nav are normal parts of this flex
+       column (not position:fixed/sticky) — only <main> scrolls. That keeps
+       the nav bar from ever being repositioned relative to the viewport
+       during a screen switch, which is what caused the "bounce". */
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    overflow:hidden;
   }
   header.app-header{
-    position:sticky;top:0;z-index:20;
+    flex:0 0 auto;
+    z-index:20;
     background:var(--green);
     color:#fff;
     padding:8px 16px 8px 16px;
-    margin-top:calc(-1 * env(safe-area-inset-top));
     padding-top:calc(8px + env(safe-area-inset-top));
     display:flex;align-items:center;justify-content:space-between;
     box-shadow:0 2px 8px rgba(0,0,0,0.12);
@@ -52,7 +58,18 @@
     width:38px;height:38px;border-radius:10px;
     font-size:18px;display:flex;align-items:center;justify-content:center;
   }
-  main{padding:14px 14px 20px;max-width:560px;margin:0 auto;}
+  main{
+    flex:1 1 auto;
+    /* Without this, a flex item with overflow can briefly lay out at its
+       own short content height before flex-grow stretches it to fill the
+       column — a two-step reflow that shows up as the bottom nav "popping"
+       into place right after a screen with little content renders.
+       min-height:0 makes it take the flex-grow height immediately. */
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px 14px 20px;max-width:560px;margin:0 auto;width:100%;
+  }
   .screen{display:none;}
   .screen.active{display:block;}
   #screen-add{padding-bottom:40px;}
@@ -176,7 +193,9 @@
   .empty-state .big{font-size:34px;margin-bottom:8px;}
   /* Bottom nav */
   nav.bottom-nav{
-    position:fixed;bottom:0;left:0;right:0;
+    /* No longer position:fixed — it's a normal flex item that always sits
+       at the bottom of the page column, below the scrollable <main>. */
+    flex:0 0 auto;
     background:#fff;border-top:1px solid var(--line);
     display:flex;
     padding-bottom:env(safe-area-inset-bottom);
@@ -416,11 +435,11 @@
       document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
       document.getElementById("screen-" + target).classList.add("active");
       if(target === "list"){ renderList(); }
-      // Switching screens can leave the page scrolled from whatever
-      // position it was at on the previous (often taller) screen. iOS can
-      // visibly "detach" the fixed nav bar from the bottom edge until the
-      // scroll position resettles, so reset it explicitly on every switch.
-      window.scrollTo(0,0);
+      // Reset scroll position within the scrollable content area (main is
+      // the actual scroll container now, not the page) so each screen
+      // starts at the top.
+      var mainEl = document.querySelector("main");
+      if(mainEl) mainEl.scrollTop = 0;
     });
   });
   // ---------- Visitor type chips ----------
@@ -504,7 +523,8 @@
     });
     document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
     document.getElementById("screen-add").classList.add("active");
-    window.scrollTo(0,0);
+    var mainEl = document.querySelector("main");
+    if(mainEl) mainEl.scrollTop = 0;
   }
   function cancelEdit(){
     editingId = null;
@@ -728,34 +748,18 @@
     });
   }
   els.searchBox.addEventListener("input", renderList);
-  // ---------- Keep bottom padding matched to the real nav bar height ----------
-  // CSS env(safe-area-inset-bottom) can be reported differently between a
-  // regular Safari tab and a "home screen" standalone app, so instead of
-  // guessing a fixed pixel value we measure the actual nav bar and pad
-  // the page to match, with a little extra buffer on top.
-  var navEl = document.querySelector("nav.bottom-nav");
-  // Standalone "Add to Home Screen" apps on iOS don't reliably report
+  // ---------- Nav bar safe-area padding ----------
+  // The nav bar is now a normal flex item (not position:fixed), so there's
+  // no more need to measure its height and pad the page to match — the
+  // flex layout handles that automatically. The one thing still needed:
+  // standalone "Add to Home Screen" apps on iOS don't reliably report
   // env(safe-area-inset-bottom) through CSS, so when running standalone we
-  // set the nav bar's bottom padding directly in pixels instead of trusting
-  // the CSS env() value at all.
+  // set the nav bar's bottom padding directly in pixels instead.
+  var navEl = document.querySelector("nav.bottom-nav");
   var isStandalone = window.navigator.standalone === true;
   if(isStandalone && navEl){
     navEl.style.paddingBottom = "34px";
   }
-  function adjustBottomPadding(){
-    if(!navEl) return;
-    var h = navEl.getBoundingClientRect().height;
-    if(h > 0){
-      document.body.style.paddingBottom = (h + 50) + "px";
-    }
-  }
-  window.addEventListener("load", adjustBottomPadding);
-  window.addEventListener("resize", adjustBottomPadding);
-  window.addEventListener("orientationchange", function(){
-    setTimeout(adjustBottomPadding, 300);
-  });
-  adjustBottomPadding();
-  setTimeout(adjustBottomPadding, 300); // catch late layout settling on standalone launch
   // ---------- Init ----------
   updateSyncBanner();
   renderList();
@@ -768,14 +772,9 @@
 </script>
 <script>
   if ('serviceWorker' in navigator) {
-    // When a newly-deployed service worker takes over, automatically
-    // reload once so people always see the latest version without having
-    // to manually clear cached data or re-add the home screen icon.
-    //
-    // (Removed the automatic reload-on-update that used to be here — it
-    // risked reload loops when deploying several versions in quick
-    // succession. The service worker already fetches fresh content over
-    // the network on every normal visit, so it wasn't actually needed.)
+    // The service worker fetches fresh content over the network on every
+    // normal visit, so there's no need for an automatic reload-on-update
+    // here (that previously risked reload loops during rapid deploys).
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('sw.js').catch(function(){});
     });
