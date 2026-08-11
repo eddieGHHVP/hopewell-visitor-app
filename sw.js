@@ -3,7 +3,7 @@
 // Bump CACHE_NAME every time you deploy a change (e.g. v1 -> v2). Changing
 // this file's contents is what tells phones a new version exists at all —
 // without a change here, some phones may keep the old version cached.
-const CACHE_NAME = 'hopewell-visitor-app-v16';
+const CACHE_NAME = 'hopewell-visitor-app-v17';
 
 // Only cache files that actually exist in this project. Don't add icons,
 // manifest.json, or anything else here unless those files are really in
